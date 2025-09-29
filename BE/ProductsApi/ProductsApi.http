@@ -1,0 +1,31 @@
+### Health
+GET http://localhost:5057/health
+
+### List products
+GET http://localhost:5057/api/products?page=1&pageSize=5
+
+### Create product
+POST http://localhost:5057/api/products
+Content-Type: application/json
+
+{
+  "name": "Test Hat",
+  "description": "A simple test product",
+  "price": 10.5,
+  "image": "https://picsum.photos/id/1062/800/800"
+}
+
+### Update product (replace {id})
+PUT http://localhost:5057/api/products/{{id}}
+Content-Type: application/json
+
+{
+  "price": 12.0
+}
+
+### Get product
+GET http://localhost:5057/api/products/{{id}}
+
+### Delete product
+DELETE http://localhost:5057/api/products/{{id}}
+
