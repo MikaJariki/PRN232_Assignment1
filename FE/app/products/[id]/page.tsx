@@ -1,7 +1,7 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { getProduct, deleteProduct } from '../../../lib/mockApi'
+import { getProduct, deleteProduct } from '../../../lib/api'
 import { Product } from '../../../lib/types'
 import Link from 'next/link'
 import ConfirmDialog from '../../../components/ConfirmDialog'

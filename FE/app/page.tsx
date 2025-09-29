@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { listProducts, deleteProduct, resetMock } from '../lib/mockApi'
+import { listProducts, deleteProduct, resetMock } from '../lib/api'
 import { Product } from '../lib/types'
 import ProductCard from '../components/ProductCard'
 import Pagination from '../components/Pagination'

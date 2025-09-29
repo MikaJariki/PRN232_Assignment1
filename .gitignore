@@ -1,0 +1,63 @@
+# --- Top-level gitignore for FE (Next.js) + BE (ASP.NET Core) ---
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Node / Next.js
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.turbo/
+.next/
+out/
+dist/
+coverage/
+.cache/
+
+# Env files (keep example)
+.env
+.env.*
+!FE/.env.local.example
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+logs/
+
+# .NET / ASP.NET Core
+bin/
+obj/
+.vs/
+TestResults/
+artifacts/
+Debug/
+Release/
+x64/
+x86/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.nupkg
+*.snupkg
+
+# Local data store (file-based repo fallback)
+BE/ProductsApi/data/
+
+# IDE project files
+.idea/
+_ReSharper*/
+*.DotSettings.user
+.vscode/
+
+# Misc
+*.swp
+*.swo
+

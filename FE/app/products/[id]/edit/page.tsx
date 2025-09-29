@@ -1,6 +1,6 @@
 'use client'
 import ProductForm, { ProductFormValues } from '../../../../components/ProductForm'
-import { getProduct, updateProduct } from '../../../../lib/mockApi'
+import { getProduct, updateProduct } from '../../../../lib/api'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Product } from '../../../../lib/types'

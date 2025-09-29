@@ -1,6 +1,6 @@
 'use client'
 import ProductForm, { ProductFormValues } from '../../../components/ProductForm'
-import { createProduct } from '../../../lib/mockApi'
+import { createProduct } from '../../../lib/api'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
