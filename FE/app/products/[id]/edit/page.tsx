@@ -1,6 +1,7 @@
 'use client'
 import ProductForm, { ProductFormValues } from '../../../../components/ProductForm'
 import { getProduct, updateProduct } from '../../../../lib/api'
+import { useToast } from '../../../../components/ToastProvider'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Product } from '../../../../lib/types'
@@ -12,6 +13,7 @@ export default function EditProductPage(){
   const [initial, setInitial] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     let mounted = true
@@ -29,6 +31,7 @@ export default function EditProductPage(){
       image: values.image?.trim() || undefined
     })
     setSubmitting(false)
+    toast.success('Product updated')
     router.push('/products/'+initial.id)
   }
 

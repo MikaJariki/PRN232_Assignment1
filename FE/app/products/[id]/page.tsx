@@ -2,6 +2,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getProduct, deleteProduct } from '../../../lib/api'
+import { useToast } from '../../../components/ToastProvider'
 import { Product } from '../../../lib/types'
 import Link from 'next/link'
 import ConfirmDialog from '../../../components/ConfirmDialog'
@@ -13,6 +14,7 @@ export default function ProductDetailPage(){
   const [p, setP] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [confirm, setConfirm] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     let mounted = true
@@ -23,6 +25,7 @@ export default function ProductDetailPage(){
   async function onDelete(){
     if(!p) return
     await deleteProduct(p.id)
+    toast.success('Product deleted')
     router.push('/')
   }
 

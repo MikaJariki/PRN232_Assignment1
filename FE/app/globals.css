@@ -34,6 +34,7 @@ html, body { height: 100%; }
   .label { @apply text-xs text-[rgb(var(--muted))]; }
 }
 .glass {
-  background: linear-gradient(to bottom right, rgba(139,92,246,.08), rgba(59,130,246,.04));
-  border: 1px solid rgba(139,92,246,.18);
+  /* UmaMusume-like soft pink/violet glass */
+  background: linear-gradient(to bottom right, rgba(200,85,181,.10), rgba(14,165,233,.06));
+  border: 1px solid rgba(200,85,181,.20);
 }

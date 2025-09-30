@@ -3,10 +3,12 @@ import ProductForm, { ProductFormValues } from '../../../components/ProductForm'
 import { createProduct } from '../../../lib/api'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useToast } from '../../../components/ToastProvider'
 
 export default function NewProductPage(){
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
+  const toast = useToast()
 
   async function handleSubmit(values: ProductFormValues){
     setSubmitting(true)
@@ -19,6 +21,7 @@ export default function NewProductPage(){
       updatedAt: ''
     } as any)
     setSubmitting(false)
+    toast.success('Product created')
     router.push('/')
   }
 

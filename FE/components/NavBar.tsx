@@ -15,7 +15,7 @@ const NavBar = () => {
       <div className="container-page">
         <div className="flex items-center h-16 gap-3">
           <Link href="/" className="font-extrabold text-lg">
-            <span className="text-brand-600 dark:text-brand-300">Flex</span>Store
+            <span className="text-brand-600 dark:text-brand-300">Uma</span> Store
           </Link>
           <div className="hidden sm:flex items-center gap-1 ml-4">
             <Item href="/" label="Home"/>

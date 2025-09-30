@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { listProducts, deleteProduct, resetMock } from '../lib/api'
+import { listProducts, deleteProduct } from '../lib/api'
 import { Product } from '../lib/types'
 import ProductCard from '../components/ProductCard'
 import Pagination from '../components/Pagination'
@@ -49,11 +49,10 @@ export default function HomePage(){
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="flex-1">
             <h1 className="text-2xl md:text-3xl font-extrabold">Beautiful Products</h1>
-            <p className="text-[rgb(var(--muted))]">Search, filter and manage products — mock data only.</p>
+            <p className="text-[rgb(var(--muted))]">Search, filter and manage products.</p>
           </div>
           <div className="flex gap-2">
             <Link href="/products/new" className="btn btn-primary">+ Add Product</Link>
-            <button className="btn btn-neutral" onClick={()=>{ resetMock(); load(1) }}>Reset Mock Data</button>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
