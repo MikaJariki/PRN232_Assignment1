@@ -53,7 +53,23 @@ if (!string.IsNullOrWhiteSpace(conn))
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+    var skipMigrate = conn.Contains("pooler", StringComparison.OrdinalIgnoreCase);
+    if (!skipMigrate)
+    {
+        try
+        {
+            await db.Database.MigrateAsync();
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Skipping EF migrations (already applied or unsupported in this environment).");
+        }
+    }
+    else
+    {
+        app.Logger.LogInformation("Detected pooled connection string, skipping EF migrations.");
+    }
+
     await DbSeeder.SeedAsync(db);
 }
 
@@ -62,3 +78,4 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.MapControllers();
 app.Run();
+
