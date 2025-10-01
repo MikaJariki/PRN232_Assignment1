@@ -1,3 +1,4 @@
+﻿using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using ProductsApi.Repository;
@@ -12,11 +13,15 @@ builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
 
-// CORS for FE at localhost:3000
+var allowedOriginsSetting = builder.Configuration["AllowedOrigins"] ?? builder.Configuration["Cors:AllowedOrigins"];
+var allowedOrigins = string.IsNullOrWhiteSpace(allowedOriginsSetting)
+    ? new[] { "http://localhost:3000", "https://localhost:3000" }
+    : allowedOriginsSetting.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("fe",
-        p => p.WithOrigins("http://localhost:3000", "https://localhost:3000")
+        p => p.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
@@ -29,13 +34,13 @@ Console.WriteLine($"[Startup] Resolved connection string: {conn}");
 if (!string.IsNullOrWhiteSpace(conn))
 {
     builder.Services.AddDbContext<AppDbContext>(opt =>
-{
-    opt.UseNpgsql(conn, npgsql =>
     {
-        npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null);
-        npgsql.CommandTimeout(60);
+        opt.UseNpgsql(conn, npgsql =>
+        {
+            npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null);
+            npgsql.CommandTimeout(60);
+        });
     });
-});
     builder.Services.AddScoped<IProductRepository, EfProductRepository>();
 }
 else
@@ -60,6 +65,7 @@ if (!string.IsNullOrWhiteSpace(conn))
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
     var skipMigrate = conn.Contains("pooler", StringComparison.OrdinalIgnoreCase);
     if (!skipMigrate)
     {
@@ -77,7 +83,21 @@ if (!string.IsNullOrWhiteSpace(conn))
         app.Logger.LogInformation("Detected pooled connection string, skipping EF migrations.");
     }
 
-    await DbSeeder.SeedAsync(db);
+    if (!env.IsProduction())
+    {
+        try
+        {
+            await DbSeeder.SeedAsync(db);
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Skipping data seeding during startup.");
+        }
+    }
+    else
+    {
+        app.Logger.LogInformation("Skipping data seeding in production environment.");
+    }
 }
 
 app.UseCors("fe");
@@ -85,7 +105,3 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.MapControllers();
 app.Run();
-
-
-
-
