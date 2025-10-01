@@ -28,7 +28,14 @@ var conn = ConnectionHelper.GetPostgresConnectionString(builder.Configuration);
 Console.WriteLine($"[Startup] Resolved connection string: {conn}");
 if (!string.IsNullOrWhiteSpace(conn))
 {
-    builder.Services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(conn));
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+{
+    opt.UseNpgsql(conn, npgsql =>
+    {
+        npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null);
+        npgsql.CommandTimeout(60);
+    });
+});
     builder.Services.AddScoped<IProductRepository, EfProductRepository>();
 }
 else
@@ -78,5 +85,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.MapControllers();
 app.Run();
+
+
 
 
