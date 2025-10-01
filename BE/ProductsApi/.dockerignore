@@ -1,0 +1,10 @@
+bin/
+obj/
+Dockerfile
+.dockerignore
+*.pyc
+*.user
+*.suo
+*.cache
+.vscode/
+*.logs

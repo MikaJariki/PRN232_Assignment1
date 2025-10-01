@@ -39,3 +39,8 @@ Code-first with PostgreSQL
 Optional: hook FE to backend
 - Create a new client in `FE/lib/api.ts` that calls this API (mirrors functions from `FE/lib/mockApi.ts`).
 - Replace imports in components from `./mockApi` to `./api`.
+
+Docker
+- Build image (local): `docker build -t products-api -f BE/ProductsApi/Dockerfile BE/ProductsApi`
+- Run with Supabase connection: `docker run -p 8080:8080 -e DATABASE_URL="postgresql://..." products-api`
+

@@ -25,6 +25,7 @@ builder.Services.AddControllers();
 
 // Choose storage: PostgreSQL (preferred) or JSON file fallback
 var conn = ConnectionHelper.GetPostgresConnectionString(builder.Configuration);
+Console.WriteLine($"[Startup] Resolved connection string: {conn}");
 if (!string.IsNullOrWhiteSpace(conn))
 {
     builder.Services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(conn));
