@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { listProducts, deleteProduct } from '../lib/api'
@@ -8,24 +8,25 @@ import Pagination from '../components/Pagination'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { CardSkeleton } from '../components/Skeleton'
 
+const initialFilters = { search: '', minPrice: '', maxPrice: '' }
+
 export default function HomePage(){
   const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [pageSize] = useState(9)
   const [total, setTotal] = useState(0)
-  const [search, setSearch] = useState('')
-  const [minPrice, setMinPrice] = useState<string>('')
-  const [maxPrice, setMaxPrice] = useState<string>('')
+  const [inputs, setInputs] = useState(initialFilters)
+  const [filters, setFilters] = useState(initialFilters)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
-  async function load(pageNum = page){
+  async function load(nextPage = page, activeFilters = filters){
     setLoading(true)
     const res = await listProducts({
-      search,
-      minPrice: minPrice ? Number(minPrice) : undefined,
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
-      page: pageNum,
+      search: activeFilters.search || undefined,
+      minPrice: activeFilters.minPrice ? Number(activeFilters.minPrice) : undefined,
+      maxPrice: activeFilters.maxPrice ? Number(activeFilters.maxPrice) : undefined,
+      page: nextPage,
       pageSize,
     })
     setItems(res.items)
@@ -34,14 +35,15 @@ export default function HomePage(){
     setLoading(false)
   }
 
-  useEffect(() => { load(1) }, [])
+  useEffect(() => { load(1, filters) }, [])
 
   const statText = useMemo(() => {
+    const { search, minPrice, maxPrice } = filters
     const maxP = maxPrice ? ` ≤ ${maxPrice}` : ''
     const minP = minPrice ? `${minPrice} ≤ ` : ''
     if (!search && !minPrice && !maxPrice) return `${total} items`
     return `Found ${total} items ${search ? `for "${search}"` : ''} ${minP || maxP ? `with price ${minP}price${maxP}`: ''}`
-  }, [total, search, minPrice, maxPrice])
+  }, [total, filters])
 
   return (
     <div className="space-y-6">
@@ -56,12 +58,45 @@ export default function HomePage(){
           </div>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
-          <input className="input md:col-span-6" placeholder="Search name or description..." value={search} onChange={e=>setSearch(e.target.value)}/>
-          <input className="input md:col-span-2" placeholder="Min price" value={minPrice} onChange={e=>setMinPrice(e.target.value)}/>
-          <input className="input md:col-span-2" placeholder="Max price" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)}/>
+          <input
+            className="input md:col-span-6"
+            placeholder="Search name or description..."
+            value={inputs.search}
+            onChange={e => setInputs(prev => ({ ...prev, search: e.target.value }))}
+          />
+          <input
+            className="input md:col-span-2"
+            placeholder="Min price"
+            value={inputs.minPrice}
+            onChange={e => setInputs(prev => ({ ...prev, minPrice: e.target.value }))}
+          />
+          <input
+            className="input md:col-span-2"
+            placeholder="Max price"
+            value={inputs.maxPrice}
+            onChange={e => setInputs(prev => ({ ...prev, maxPrice: e.target.value }))}
+          />
           <div className="md:col-span-2 flex gap-2">
-            <button className="btn btn-neutral w-full" onClick={()=>load(1)}>Apply</button>
-            <button className="btn btn-neutral w-full" onClick={()=>{ setSearch(''); setMinPrice(''); setMaxPrice(''); load(1) }}>Clear</button>
+            <button
+              className="btn btn-neutral w-full"
+              onClick={() => {
+                const next = { ...inputs }
+                setFilters(next)
+                load(1, next)
+              }}
+            >
+              Apply
+            </button>
+            <button
+              className="btn btn-neutral w-full"
+              onClick={() => {
+                setInputs(initialFilters)
+                setFilters(initialFilters)
+                load(1, initialFilters)
+              }}
+            >
+              Clear
+            </button>
           </div>
         </div>
         <div className="mt-3 text-sm text-[rgb(var(--muted))]">{statText}</div>
@@ -79,14 +114,14 @@ export default function HomePage(){
         </div>
       )}
 
-      <Pagination page={page} total={total} pageSize={pageSize} onPage={(p)=>{ setPage(p); load(p) }}/>
+      <Pagination page={page} total={total} pageSize={pageSize} onPage={(p)=>{ load(p, filters) }}/>
 
       <ConfirmDialog
         open={!!confirmId}
         title="Delete this product?"
         description="This action cannot be undone."
         onCancel={()=>setConfirmId(null)}
-        onConfirm={async ()=>{ if(confirmId){ await deleteProduct(confirmId); setConfirmId(null); load() } }}
+        onConfirm={async ()=>{ if(confirmId){ await deleteProduct(confirmId); setConfirmId(null); load(undefined, filters) } }}
       />
     </div>
   )
