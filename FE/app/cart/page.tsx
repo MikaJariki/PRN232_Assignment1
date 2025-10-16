@@ -52,7 +52,16 @@ export default function CartPage(){
           <div className="h-3 w-1/2 rounded bg-[rgb(var(--border))]/60"></div>
         </div>
       ) : isEmpty ? (
-        <div className="card flex flex-col items-center gap-6 py-12 text-center">\n          <div className="h-48 w-48 overflow-hidden rounded-full border-2 border-[rgb(var(--border))] bg-white shadow-soft">\n            <img src="https://iili.io/KkUVI0F.jpg" alt="Empty cart illustration" className="h-full w-full object-cover" loading="lazy" />\n          </div>\n          <div className="space-y-2">
+        <div className="card flex flex-col items-center gap-6 py-12 text-center">
+          <div className="h-48 w-48 overflow-hidden rounded-2xl bg-white shadow-soft">
+            <img
+              src="https://iili.io/KkUVI0F.jpg"
+              alt="Empty cart illustration"
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          <div className="space-y-2">
             <h2 className="text-xl font-semibold">Your cart is feeling lonely</h2>
             <p className="text-[rgb(var(--muted))]">Browse the catalogue and add products you love.</p>
           </div>
