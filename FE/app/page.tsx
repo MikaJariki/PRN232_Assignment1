@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { listProducts, deleteProduct } from '../lib/api'
@@ -7,10 +7,17 @@ import ProductCard from '../components/ProductCard'
 import Pagination from '../components/Pagination'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { CardSkeleton } from '../components/Skeleton'
+import { useToast } from '../components/ToastProvider'
+import { useAuth } from '../components/AuthProvider'
+import { useCart } from '../components/CartProvider'
 
 const initialFilters = { search: '', minPrice: '', maxPrice: '' }
 
 export default function HomePage(){
+  const toast = useToast()
+  const { user } = useAuth()
+  const cart = useCart()
+
   const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -22,20 +29,25 @@ export default function HomePage(){
 
   async function load(nextPage = page, activeFilters = filters){
     setLoading(true)
-    const res = await listProducts({
-      search: activeFilters.search || undefined,
-      minPrice: activeFilters.minPrice ? Number(activeFilters.minPrice) : undefined,
-      maxPrice: activeFilters.maxPrice ? Number(activeFilters.maxPrice) : undefined,
-      page: nextPage,
-      pageSize,
-    })
-    setItems(res.items)
-    setTotal(res.total)
-    setPage(res.page)
-    setLoading(false)
+    try {
+      const res = await listProducts({
+        search: activeFilters.search || undefined,
+        minPrice: activeFilters.minPrice ? Number(activeFilters.minPrice) : undefined,
+        maxPrice: activeFilters.maxPrice ? Number(activeFilters.maxPrice) : undefined,
+        page: nextPage,
+        pageSize,
+      })
+      setItems(res.items)
+      setTotal(res.total)
+      setPage(res.page)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load products')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  useEffect(() => { load(1, filters) }, [])
+  useEffect(() => { load(1, filters) /* eslint-disable-line react-hooks/exhaustive-deps */ }, [])
 
   const statText = useMemo(() => {
     const { search, minPrice, maxPrice } = filters
@@ -44,6 +56,25 @@ export default function HomePage(){
     if (!search && !minPrice && !maxPrice) return `${total} items`
     return `Found ${total} items ${search ? `for "${search}"` : ''} ${minP || maxP ? `with price ${minP}price${maxP}`: ''}`
   }, [total, filters])
+
+  async function handleDelete(id: string){
+    try {
+      await deleteProduct(id)
+      toast.success('Product deleted')
+      setConfirmId(null)
+      load(page, filters)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete product')
+    }
+  }
+
+  async function handleAdd(product: Product){
+    try {
+      await cart.add(product.id)
+    } catch {
+      // errors surfaced through cart provider toast
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -54,7 +85,8 @@ export default function HomePage(){
             <p className="text-[rgb(var(--muted))]">Search, filter and manage products.</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/products/new" className="btn btn-primary">+ Add Product</Link>
+            {user && <Link href="/products/new" className="btn btn-primary">+ Add Product</Link>}
+            {!user && <Link href="/login" className="btn btn-neutral">Login to manage</Link>}
           </div>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
@@ -110,7 +142,15 @@ export default function HomePage(){
         <div className="card"><p className="text-[rgb(var(--muted))]">No products found. Try adjusting your filters or create a new one.</p></div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {items.map(p => (<ProductCard key={p.id} p={p} onDelete={(id)=>setConfirmId(id)} />))}
+          {items.map(p => (
+            <ProductCard
+              key={p.id}
+              p={p}
+              canManage={!!user}
+              onAddToCart={handleAdd}
+              onDelete={user ? () => setConfirmId(p.id) : undefined}
+            />
+          ))}
         </div>
       )}
 
@@ -121,7 +161,7 @@ export default function HomePage(){
         title="Delete this product?"
         description="This action cannot be undone."
         onCancel={()=>setConfirmId(null)}
-        onConfirm={async ()=>{ if(confirmId){ await deleteProduct(confirmId); setConfirmId(null); load(undefined, filters) } }}
+        onConfirm={() => { if (confirmId) handleDelete(confirmId) }}
       />
     </div>
   )

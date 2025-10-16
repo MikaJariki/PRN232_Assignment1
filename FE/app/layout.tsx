@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 import NavBar from '../components/NavBar'
 import { ToastProvider } from '../components/ToastProvider'
+import { AuthProvider } from '../components/AuthProvider'
+import { CartProvider } from '../components/CartProvider'
 
 export const metadata: Metadata = {
   title: 'Uma Store – Pretty Fixed',
@@ -13,8 +15,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body>
         <ToastProvider>
-          <NavBar/>
-          <main className="container-page py-6">{children}</main>
+          <AuthProvider>
+            <CartProvider>
+              <NavBar/>
+              <main className="container-page py-6">{children}</main>
+            </CartProvider>
+          </AuthProvider>
         </ToastProvider>
       </body>
     </html>

@@ -1,2 +1,9 @@
 export type Product = { id:string; name:string; description:string; price:number; image?:string; createdAt:string; updatedAt:string }
 export type Paged<T> = { items:T[]; total:number; page:number; pageSize:number }
+export type UserSummary = { id:string; email:string; createdAt:string }
+export type AuthResponse = { token:string; user:UserSummary }
+export type CartItem = { id:string; productId:string; name:string; description:string; price:number; image?:string; quantity:number; lineTotal:number }
+export type CartResponse = { items:CartItem[]; total:number }
+export type OrderSummary = { id:string; totalAmount:number; status:string; createdAt:string }
+export type OrderLineDetails = { productId:string; name:string; description:string; price:number; quantity:number; lineTotal:number }
+export type OrderDetails = OrderSummary & { paidAt?:string | null; items:OrderLineDetails[] }

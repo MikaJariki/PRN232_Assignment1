@@ -2,7 +2,14 @@
 import Link from 'next/link'
 import { Product } from '../lib/types'
 
-export default function ProductCard({ p, onDelete }:{ p: Product; onDelete?: (id:string)=>void }){
+type Props = {
+  p: Product
+  canManage?: boolean
+  onAddToCart?: (product: Product) => void
+  onDelete?: (id: string) => void
+}
+
+export default function ProductCard({ p, canManage, onAddToCart, onDelete }: Props){
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-gradient-to-b from-black/5 to-transparent p-3 shadow-glass hover:shadow-2xl transition">
       <div className="aspect-square w-full overflow-hidden rounded-xl border border-[rgb(var(--border))]">
@@ -17,11 +24,21 @@ export default function ProductCard({ p, onDelete }:{ p: Product; onDelete?: (id
           <div className="chip">${p.price.toFixed(2)}</div>
         </div>
       </div>
-      <div className="mt-3 flex gap-2">
-        <Link className="btn btn-neutral" href={`/products/${p.id}/edit`}>Edit</Link>
-        <Link className="btn btn-primary" href={`/products/${p.id}`}>View</Link>
-        <div className="flex-1"/>
-        {onDelete && <button className="btn btn-danger" onClick={()=>onDelete(p.id)}>Delete</button>}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          className="btn btn-primary"
+          onClick={() => onAddToCart?.(p)}
+          disabled={!onAddToCart}
+        >
+          Add to Cart
+        </button>
+        <Link className="btn btn-neutral" href={`/products/${p.id}`}>View</Link>
+        {canManage && (
+          <>
+            <Link className="btn btn-neutral" href={`/products/${p.id}/edit`}>Edit</Link>
+            {onDelete && <button className="btn btn-danger" onClick={()=>onDelete(p.id)}>Delete</button>}
+          </>
+        )}
       </div>
     </div>
   )

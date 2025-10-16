@@ -1,11 +1,13 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import ConfirmDialog from '../../../components/ConfirmDialog'
 import { getProduct, deleteProduct } from '../../../lib/api'
 import { useToast } from '../../../components/ToastProvider'
 import { Product } from '../../../lib/types'
-import Link from 'next/link'
-import ConfirmDialog from '../../../components/ConfirmDialog'
+import { useAuth } from '../../../components/AuthProvider'
+import { useCart } from '../../../components/CartProvider'
 
 export default function ProductDetailPage(){
   const params = useParams()
@@ -15,6 +17,8 @@ export default function ProductDetailPage(){
   const [loading, setLoading] = useState(true)
   const [confirm, setConfirm] = useState(false)
   const toast = useToast()
+  const { user } = useAuth()
+  const cart = useCart()
 
   useEffect(() => {
     let mounted = true
@@ -24,9 +28,24 @@ export default function ProductDetailPage(){
 
   async function onDelete(){
     if(!p) return
-    await deleteProduct(p.id)
-    toast.success('Product deleted')
-    router.push('/')
+    try {
+      await deleteProduct(p.id)
+      toast.success('Product deleted')
+      router.push('/')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete product')
+    } finally {
+      setConfirm(false)
+    }
+  }
+
+  async function onAddToCart(){
+    if (!p) return
+    try {
+      await cart.add(p.id)
+    } catch {
+      // handled by cart provider toast
+    }
   }
 
   if (loading) return <p className="text-[rgb(var(--muted))]">Loading...</p>
@@ -46,9 +65,15 @@ export default function ProductDetailPage(){
           </div>
           <p className="text-[rgb(var(--muted))]">{p.description}</p>
         </div>
-        <div className="flex gap-2">
-          <Link className="btn btn-neutral" href={`/products/${p.id}/edit`}>Edit</Link>
-          <button className="btn btn-danger" onClick={()=>setConfirm(true)}>Delete</button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button className="btn btn-primary" onClick={onAddToCart}>Add to Cart</button>
+          {user && (
+            <>
+              <Link className="btn btn-neutral" href={`/products/${p.id}/edit`}>Edit</Link>
+              <button className="btn btn-danger" onClick={()=>setConfirm(true)}>Delete</button>
+            </>
+          )}
+          <Link className="btn btn-neutral" href={`/products/${p.id}`}>Refresh</Link>
           <div className="flex-1"/>
           <Link className="btn btn-neutral" href="/">Back</Link>
         </div>
