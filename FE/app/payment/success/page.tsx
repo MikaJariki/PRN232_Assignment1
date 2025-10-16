@@ -1,8 +1,9 @@
 'use client'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function PaymentSuccessPage(){
+function PaymentSuccessContent(){
   const params = useSearchParams()
   const orderId = params?.get('orderId')
 
@@ -17,7 +18,7 @@ export default function PaymentSuccessPage(){
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Payment Successful</h1>
         <p className="text-[rgb(var(--muted))]">
-          Thank you for your purchase. Your payment has been confirmed and we’ve started preparing your order.
+          Thank you for your purchase. Your payment has been confirmed and we've started preparing your order.
         </p>
       </div>
       <div className="mx-auto mt-4 grid gap-4 text-sm text-left text-[rgb(var(--muted))] sm:max-w-md">
@@ -37,4 +38,10 @@ export default function PaymentSuccessPage(){
   )
 }
 
-
+export default function PaymentSuccessPage(){
+  return (
+    <Suspense fallback={<div className="text-center text-[rgb(var(--muted))]">Loading...</div>}>
+      <PaymentSuccessContent />
+    </Suspense>
+  )
+}
