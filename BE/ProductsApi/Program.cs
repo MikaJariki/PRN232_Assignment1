@@ -1,10 +1,13 @@
-﻿using System;
+using System;
+using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using ProductsApi.Repository;
+using Microsoft.IdentityModel.Tokens;
 using ProductsApi.Models;
-using ProductsApi.Storage;
+using ProductsApi.Repository;
 using ProductsApi.Services;
+using ProductsApi.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,63 +48,119 @@ if (!string.IsNullOrWhiteSpace(conn))
 }
 else
 {
-    builder.Services.AddSingleton<IProductRepository>(sp =>
+    builder.Services.AddDbContext<AppDbContext>(opt =>
     {
-        var env = sp.GetRequiredService<IHostEnvironment>();
-        var dataPath = Path.Combine(env.ContentRootPath, "data", "products.json");
-        return new FileProductRepository(dataPath);
+        opt.UseInMemoryDatabase("UmaStore");
     });
+    builder.Services.AddScoped<IProductRepository, EfProductRepository>();
 }
 
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<TokenService>();
+builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection(StripeOptions.Section));
+builder.Services.AddScoped<StripeService>();
+
+var jwtSection = builder.Configuration.GetSection(JwtOptions.Section);
+var jwtSecret = jwtSection["Secret"] ?? builder.Configuration["JwtSecret"] ?? "dev-super-secret-change-me";
+var jwtIssuer = jwtSection["Issuer"] ?? "ProductsApi";
+var jwtAudience = jwtSection["Audience"] ?? "ProductsApiClient";
+var jwtExpiry = jwtSection["ExpiryMinutes"];
+
+builder.Services.Configure<JwtOptions>(options =>
+{
+    options.Secret = jwtSecret;
+    options.Issuer = jwtIssuer;
+    options.Audience = jwtAudience;
+    if (int.TryParse(jwtExpiry, out var minutes) && minutes > 0)
+    {
+        options.ExpiryMinutes = minutes;
+    }
+});
+
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+var validateIssuer = !string.IsNullOrWhiteSpace(jwtIssuer);
+var validateAudience = !string.IsNullOrWhiteSpace(jwtAudience);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateIssuer = validateIssuer,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = validateAudience,
+            ValidAudience = jwtAudience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Ensure DB exists and seed if using EF
-if (!string.IsNullOrWhiteSpace(conn))
+// Ensure database exists and seed baseline data
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
-    var skipMigrate = conn.Contains("pooler", StringComparison.OrdinalIgnoreCase);
-    if (!skipMigrate)
+    var db = scope.ServiceProvider.GetService<AppDbContext>();
+    if (db is not null)
     {
-        try
-        {
-            await db.Database.MigrateAsync();
-        }
-        catch (Exception ex)
-        {
-            app.Logger.LogWarning(ex, "Skipping EF migrations (already applied or unsupported in this environment).");
-        }
-    }
-    else
-    {
-        app.Logger.LogInformation("Detected pooled connection string, skipping EF migrations.");
-    }
+        var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
-    if (!env.IsProduction())
-    {
-        try
+        if (!string.IsNullOrWhiteSpace(conn))
         {
-            await DbSeeder.SeedAsync(db);
+            var skipMigrate = conn.Contains("pooler", StringComparison.OrdinalIgnoreCase);
+            if (!skipMigrate)
+            {
+                try
+                {
+                    await db.Database.MigrateAsync();
+                }
+                catch (Exception ex)
+                {
+                    app.Logger.LogWarning(ex, "Skipping EF migrations (already applied or unsupported in this environment).");
+                }
+            }
+            else
+            {
+                app.Logger.LogInformation("Detected pooled connection string, skipping EF migrations.");
+            }
         }
-        catch (Exception ex)
+        else
         {
-            app.Logger.LogWarning(ex, "Skipping data seeding during startup.");
+            await db.Database.EnsureCreatedAsync();
         }
-    }
-    else
-    {
-        app.Logger.LogInformation("Skipping data seeding in production environment.");
+
+        if (!env.IsProduction())
+        {
+            try
+            {
+                await DbSeeder.SeedAsync(db);
+            }
+            catch (Exception ex)
+            {
+                app.Logger.LogWarning(ex, "Skipping data seeding during startup.");
+            }
+        }
+        else
+        {
+            app.Logger.LogInformation("Skipping data seeding in production environment.");
+        }
     }
 }
 
 app.UseCors("fe");
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.Run();

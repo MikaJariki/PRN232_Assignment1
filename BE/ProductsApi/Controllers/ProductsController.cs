@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProductsApi.Models;
 using ProductsApi.Services;
@@ -22,6 +23,7 @@ public class ProductsController(IProductService service) : ControllerBase
         return item is null ? NotFound() : Ok(item);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<Product>> Create([FromBody] CreateProductDto input)
     {
@@ -36,6 +38,7 @@ public class ProductsController(IProductService service) : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<ActionResult<Product>> Update(string id, [FromBody] UpdateProductDto patch)
     {
@@ -50,6 +53,7 @@ public class ProductsController(IProductService service) : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(string id)
     {
@@ -57,4 +61,3 @@ public class ProductsController(IProductService service) : ControllerBase
         return ok ? NoContent() : NotFound();
     }
 }
-
