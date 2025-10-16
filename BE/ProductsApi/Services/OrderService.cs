@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProductsApi.Models;
 using ProductsApi.Storage;
+using System.Linq;
 
 namespace ProductsApi.Services;
 
@@ -40,7 +41,10 @@ public class OrderService(AppDbContext db) : IOrderService
             }).ToList()
         };
         db.Orders.Add(order);
-        db.CartItems.RemoveRange(cartItems);
+        if (markPaid)
+        {
+            db.CartItems.RemoveRange(cartItems);
+        }
         await db.SaveChangesAsync();
 
         return ToDetails(order);
@@ -82,8 +86,46 @@ public class OrderService(AppDbContext db) : IOrderService
 
         if (order is null) return null;
 
+        if (order.Status == "paid")
+        {
+            if (order.PaidAt is null)
+            {
+                order.PaidAt = DateTime.UtcNow;
+                await db.SaveChangesAsync();
+            }
+            return ToDetails(order);
+        }
+
         order.Status = "paid";
         order.PaidAt = DateTime.UtcNow;
+
+        var quantities = order.Items
+            .GroupBy(i => i.ProductId)
+            .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));
+
+        if (quantities.Count > 0)
+        {
+            var cartItems = await db.CartItems
+                .Where(c => c.UserId == userId && quantities.ContainsKey(c.ProductId))
+                .ToListAsync();
+
+            foreach (var cartItem in cartItems)
+            {
+                var orderedQuantity = quantities[cartItem.ProductId];
+                if (orderedQuantity <= 0) continue;
+
+                if (cartItem.Quantity <= orderedQuantity)
+                {
+                    db.CartItems.Remove(cartItem);
+                }
+                else
+                {
+                    cartItem.Quantity -= orderedQuantity;
+                    cartItem.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+        }
+
         await db.SaveChangesAsync();
 
         return ToDetails(order);
