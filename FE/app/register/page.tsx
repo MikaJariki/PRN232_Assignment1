@@ -82,7 +82,7 @@ function RegisterForm(){
               className="input pr-12"
               value={form.password}
               onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))}
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               required
               minLength={6}
             />
@@ -114,7 +114,7 @@ function RegisterForm(){
               className="input pr-12"
               value={form.confirm}
               onChange={e => setForm(prev => ({ ...prev, confirm: e.target.value }))}
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               required
             />
             <button
