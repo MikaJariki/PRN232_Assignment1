@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../../components/AuthProvider'
-import { getOrder, getProduct } from '../../../lib/api'
+import { getOrder, getProduct, markOrderPaid } from '../../../lib/api'
 import { OrderDetails } from '../../../lib/types'
 import { useToast } from '../../../components/ToastProvider'
 
@@ -15,7 +15,7 @@ export default function OrderDetailPage(){
   const toast = useToast()
   const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
-  const [redirecting, setRedirecting] = useState(false)
+  const [marking, setMarking] = useState(false)
   const [productImages, setProductImages] = useState<Record<string, string | undefined>>({})
 
   useEffect(() => {
@@ -64,10 +64,17 @@ export default function OrderDetailPage(){
     return () => { cancelled = true }
   }, [order, productImages])
 
-  function handleRedirectToCheckout(){
-    setRedirecting(true)
-    const resumeQuery = `resume=${encodeURIComponent(id)}`
-    router.push(`/checkout?${resumeQuery}`)
+  async function handleMarkPaid(){
+    try {
+      setMarking(true)
+      const data = await markOrderPaid(id)
+      setOrder(data)
+      toast.success('Order marked as paid')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update order')
+    } finally {
+      setMarking(false)
+    }
   }
 
   if (initializing) return <p className="text-[rgb(var(--muted))]">Loading...</p>
@@ -167,17 +174,12 @@ export default function OrderDetailPage(){
               </div>
             )}
             <div className="flex flex-col gap-2">
-              <button type="button" className="btn btn-primary" onClick={() => router.push('/orders')}>
+              <button className="btn btn-primary" onClick={() => router.push('/orders')}>
                 Back to all orders
               </button>
               {!paid && (
-                <button
-                  type="button"
-                  className="btn btn-neutral"
-                  onClick={handleRedirectToCheckout}
-                  disabled={redirecting}
-                >
-                  {redirecting ? 'Redirecting…' : 'Confirm payment'}
+                <button className="btn btn-neutral" onClick={handleMarkPaid} disabled={marking}>
+                  {marking ? 'Updating…' : 'Confirm payment'}
                 </button>
               )}
             </div>
