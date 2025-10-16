@@ -1,11 +1,11 @@
 'use client'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useAuth } from '../../components/AuthProvider'
 import { useToast } from '../../components/ToastProvider'
 
-export default function LoginPage(){
+function LoginForm(){
   const router = useRouter()
   const params = useSearchParams()
   const { user, login, initializing } = useAuth()
@@ -86,5 +86,13 @@ export default function LoginPage(){
         No account yet? <Link className="text-brand-600 hover:underline" href="/register">Create one</Link>
       </p>
     </div>
+  )
+}
+
+export default function LoginPage(){
+  return (
+    <Suspense fallback={<div className="text-center text-[rgb(var(--muted))]">Loading...</div>}>
+      <LoginForm/>
+    </Suspense>
   )
 }

@@ -1,11 +1,11 @@
 'use client'
 import Link from 'next/link'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import { useAuth } from '../../components/AuthProvider'
 import { useToast } from '../../components/ToastProvider'
 
-export default function RegisterPage(){
+function RegisterForm(){
   const router = useRouter()
   const params = useSearchParams()
   const { user, register, initializing } = useAuth()
@@ -82,7 +82,7 @@ export default function RegisterPage(){
               className="input pr-12"
               value={form.password}
               onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))}
-              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+              placeholder="••••••••"
               required
               minLength={6}
             />
@@ -114,7 +114,7 @@ export default function RegisterPage(){
               className="input pr-12"
               value={form.confirm}
               onChange={e => setForm(prev => ({ ...prev, confirm: e.target.value }))}
-              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+              placeholder="••••••••"
               required
             />
             <button
@@ -147,3 +147,10 @@ export default function RegisterPage(){
   )
 }
 
+export default function RegisterPage(){
+  return (
+    <Suspense fallback={<div className="text-center text-[rgb(var(--muted))]">Loading...</div>}>
+      <RegisterForm />
+    </Suspense>
+  )
+}
